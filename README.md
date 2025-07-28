@@ -285,7 +285,7 @@ export OPENAI_API_KEY="your-key"
 
 ## Disclaimer
 
-This tool is for educational and research purposes only. Users are responsible for how they deploy and use this honeypot system. Always obtain proper authorization before deploying honeypots in production environments.
+This LLM Security Testing Framework is for authorized security testing, educational, and research purposes only. Users are solely responsible for how they deploy and use this security assessment tool. Always obtain explicit written authorization before testing any Large Language Model system, API, or AI service. This framework must only be used against systems you own or have been granted permission to test. Unauthorized testing of AI systems may violate terms of service, computer fraud laws, and other applicable regulations. Users must ensure compliance with all local, state, and federal laws when conducting security assessments.
 
 ## Contact
 For professional services, integrations, or support contact: operations@redcellsecurity.org
