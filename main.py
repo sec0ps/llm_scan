@@ -59,8 +59,9 @@ class VersionChecker:
     
     def __init__(self):
         self.current_version = "1.0.0"  # Update this with your current version
-        self.github_version_url = "https://raw.githubusercontent.com/sec0ops/llm_scan/main/version.txt"
-        self.update_url = "https://github.com/sec0ops/llm_scan"
+        self.github_version_url = "https://raw.githubusercontent.com/sec0ps/llm_scan/main/version.txt"
+        self.update_url = "https://github.com/sec0ps/llm_scan"
+        self.repo_url = "https://github.com/sec0ps/llm_scan.git"
         
     def get_current_version(self):
         """Get current version from local version file or default"""
@@ -83,6 +84,77 @@ class VersionChecker:
         except requests.RequestException:
             return None
     
+    def auto_update(self):
+        """Automatically update to the latest version"""
+        import subprocess
+        import shutil
+        
+        print("Attempting automatic update...")
+        
+        # Check if git is available
+        if not shutil.which('git'):
+            print("ERROR: Git is not installed or not in PATH. Cannot auto-update.")
+            print("Please install git or update manually:")
+            print(f"   Download from: {self.update_url}")
+            return False
+        
+        # Check if we're in a git repository
+        try:
+            result = subprocess.run(['git', 'rev-parse', '--git-dir'], 
+                                  capture_output=True, text=True, check=True)
+            print("SUCCESS: Git repository detected")
+        except subprocess.CalledProcessError:
+            print("ERROR: Not in a git repository. Cannot auto-update.")
+            print("Please clone the repository manually:")
+            print(f"   git clone {self.repo_url}")
+            return False
+        
+        try:
+            # Fetch latest changes
+            print("Fetching latest changes...")
+            subprocess.run(['git', 'fetch', 'origin'], check=True, capture_output=True)
+            
+            # Check if there are any uncommitted changes
+            result = subprocess.run(['git', 'status', '--porcelain'], 
+                                  capture_output=True, text=True, check=True)
+            if result.stdout.strip():
+                print("WARNING: Uncommitted changes detected.")
+                response = input("Continue with update? This will stash your changes (y/n): ").strip().lower()
+                if response != 'y':
+                    print("Update cancelled.")
+                    return False
+                
+                # Stash changes
+                print("Stashing local changes...")
+                subprocess.run(['git', 'stash'], check=True, capture_output=True)
+            
+            # Pull latest changes
+            print("Pulling latest version...")
+            subprocess.run(['git', 'pull', 'origin', 'main'], check=True, capture_output=True)
+            
+            # Update dependencies
+            if shutil.which('pip'):
+                print("Updating Python dependencies...")
+                subprocess.run(['pip', 'install', '-r', 'requirements.txt'], 
+                             check=True, capture_output=True)
+            else:
+                print("WARNING: pip not found. Please update dependencies manually:")
+                print("   pip install -r requirements.txt")
+            
+            print("SUCCESS: Update completed successfully!")
+            print("Please restart the application to use the new version.")
+            return True
+            
+        except subprocess.CalledProcessError as e:
+            print(f"ERROR: Update failed: {e}")
+            print("Please update manually:")
+            print(f"   git pull origin main")
+            print(f"   pip install -r requirements.txt")
+            return False
+        except Exception as e:
+            print(f"ERROR: Unexpected error during update: {e}")
+            return False
+    
     def compare_versions(self, current, remote):
         """Compare current and remote versions"""
         try:
@@ -90,35 +162,55 @@ class VersionChecker:
         except Exception:
             return False
     
-    def check_for_updates(self, silent=False):
-        """Check for updates and display notification"""
+    def check_for_updates(self, silent=False, auto_update=True):
+        """Check for updates and optionally auto-update"""
         if not silent:
-            print("🔍 Checking for updates...")
+            print("Checking for updates...")
         
         current_ver = self.get_current_version()
         remote_ver = self.get_remote_version()
         
         if remote_ver is None:
             if not silent:
-                print("⚠️  Could not check for updates (network/connection issue)")
+                print("WARNING: Could not check for updates (network/connection issue)")
             return False
         
         if self.compare_versions(current_ver, remote_ver):
-            print("🆕 NEW VERSION AVAILABLE!")
+            print("NEW VERSION AVAILABLE!")
             print("=" * 50)
             print(f"Current Version: {current_ver}")
             print(f"Latest Version:  {remote_ver}")
             print(f"Update URL: {self.update_url}")
             print("=" * 50)
-            print("📥 To update:")
-            print("   git pull origin main")
-            print("   pip install -r requirements.txt")
+            
+            if auto_update:
+                response = input("Automatically update now? (y/n): ").strip().lower()
+                if response == 'y':
+                    if self.auto_update():
+                        print("Update completed. Please restart the application.")
+                        import sys
+                        sys.exit(0)
+                    else:
+                        print("Auto-update failed. Manual update required.")
+                        self._show_manual_update_instructions()
+                else:
+                    print("Auto-update declined.")
+                    self._show_manual_update_instructions()
+            else:
+                self._show_manual_update_instructions()
+            
             print("=" * 50)
             return True
         else:
             if not silent:
-                print(f"✅ You're running the latest version ({current_ver})")
+                print(f"SUCCESS: You're running the latest version ({current_ver})")
             return False
+    
+    def _show_manual_update_instructions(self):
+        """Show manual update instructions"""
+        print("To update manually:")
+        print("   git pull origin main")
+        print("   pip install -r requirements.txt")
 
 def check_version_startup():
     """Version check function to call at startup"""
@@ -126,7 +218,7 @@ def check_version_startup():
         checker = VersionChecker()
         checker.check_for_updates()
     except Exception as e:
-        print(f"⚠️  Version check failed: {str(e)}")
+        print(f"WARNING: Version check failed: {str(e)}")
 
 class LLMSecurityTestingFramework:
     """Main framework class that orchestrates all security tests"""
@@ -159,7 +251,7 @@ class LLMSecurityTestingFramework:
     
     def display_main_menu(self):
         """Display main menu options"""
-        print("\n🔧 MAIN MENU")
+        print("\nMAIN MENU")
         print("-" * 30)
         print("1. Configure Target")
         print("2. Run Quick Security Scan")
@@ -173,7 +265,7 @@ class LLMSecurityTestingFramework:
     def configure_target_menu(self):
         """Handle target configuration"""
         while True:
-            print("\n🎯 TARGET CONFIGURATION")
+            print("\nTARGET CONFIGURATION")
             print("-" * 30)
             print("1. Create New Target (Manual)")
             print("2. Use Template (OpenAI)")
@@ -201,11 +293,11 @@ class LLMSecurityTestingFramework:
             elif choice == "7":
                 break
             else:
-                print("❌ Invalid option. Please try again.")
+                print("ERROR: Invalid option. Please try again.")
     
     def create_manual_target(self):
         """Create target configuration manually"""
-        print("\n⚙️ Manual Target Configuration")
+        print("\nManual Target Configuration")
         print("-" * 30)
         
         # Get target type
@@ -223,13 +315,13 @@ class LLMSecurityTestingFramework:
         elif type_choice == "3":
             target_type = TargetType.CHATBOT_INTERFACE
         else:
-            print("❌ Invalid target type.")
+            print("ERROR: Invalid target type.")
             return
         
         # Get basic configuration
         base_url = input("Enter base URL: ").strip()
         if not base_url:
-            print("❌ Base URL is required.")
+            print("ERROR: Base URL is required.")
             return
         
         api_key = input("Enter API key (press Enter to skip): ").strip()
@@ -248,18 +340,18 @@ class LLMSecurityTestingFramework:
         if target_name:
             self.config_manager.add_target(target_name, target_config)
             self.current_target = target_config
-            print(f"✅ Target '{target_name}' configured successfully!")
+            print(f"SUCCESS: Target '{target_name}' configured successfully!")
         else:
-            print("❌ Target name is required.")
+            print("ERROR: Target name is required.")
     
     def create_openai_target(self):
         """Create OpenAI target using template"""
-        print("\n🤖 OpenAI Target Configuration")
+        print("\nOpenAI Target Configuration")
         print("-" * 30)
         
         api_key = input("Enter OpenAI API key: ").strip()
         if not api_key:
-            print("❌ API key is required.")
+            print("ERROR: API key is required.")
             return
         
         model = input("Enter model name (default: gpt-3.5-turbo): ").strip()
@@ -272,18 +364,18 @@ class LLMSecurityTestingFramework:
         if target_name:
             self.config_manager.add_target(target_name, target_config)
             self.current_target = target_config
-            print(f"✅ OpenAI target '{target_name}' configured successfully!")
+            print(f"SUCCESS: OpenAI target '{target_name}' configured successfully!")
         else:
-            print("❌ Target name is required.")
+            print("ERROR: Target name is required.")
     
     def create_anthropic_target(self):
         """Create Anthropic target using template"""
-        print("\n🧠 Anthropic Target Configuration")
+        print("\nAnthropic Target Configuration")
         print("-" * 30)
         
         api_key = input("Enter Anthropic API key: ").strip()
         if not api_key:
-            print("❌ API key is required.")
+            print("ERROR: API key is required.")
             return
         
         model = input("Enter model name (default: claude-3-sonnet-20240229): ").strip()
@@ -296,28 +388,28 @@ class LLMSecurityTestingFramework:
         if target_name:
             self.config_manager.add_target(target_name, target_config)
             self.current_target = target_config
-            print(f"✅ Anthropic target '{target_name}' configured successfully!")
+            print(f"SUCCESS: Anthropic target '{target_name}' configured successfully!")
         else:
-            print("❌ Target name is required.")
+            print("ERROR: Target name is required.")
     
     def create_azure_target(self):
         """Create Azure OpenAI target using template"""
-        print("\n☁️ Azure OpenAI Target Configuration")
+        print("\nAzure OpenAI Target Configuration")
         print("-" * 30)
         
         api_key = input("Enter Azure API key: ").strip()
         if not api_key:
-            print("❌ API key is required.")
+            print("ERROR: API key is required.")
             return
         
         base_url = input("Enter Azure endpoint URL: ").strip()
         if not base_url:
-            print("❌ Endpoint URL is required.")
+            print("ERROR: Endpoint URL is required.")
             return
         
         deployment_name = input("Enter deployment name: ").strip()
         if not deployment_name:
-            print("❌ Deployment name is required.")
+            print("ERROR: Deployment name is required.")
             return
         
         target_config = ConfigurationTemplate.create_azure_openai_target(
@@ -328,13 +420,13 @@ class LLMSecurityTestingFramework:
         if target_name:
             self.config_manager.add_target(target_name, target_config)
             self.current_target = target_config
-            print(f"✅ Azure OpenAI target '{target_name}' configured successfully!")
+            print(f"SUCCESS: Azure OpenAI target '{target_name}' configured successfully!")
         else:
-            print("❌ Target name is required.")
+            print("ERROR: Target name is required.")
     
     def create_local_target(self):
         """Create local/self-hosted target using template"""
-        print("\n💻 Local/Self-hosted Target Configuration")
+        print("\nLocal/Self-hosted Target Configuration")
         print("-" * 30)
         
         base_url = input("Enter base URL (default: http://localhost:11434): ").strip()
@@ -351,19 +443,19 @@ class LLMSecurityTestingFramework:
         if target_name:
             self.config_manager.add_target(target_name, target_config)
             self.current_target = target_config
-            print(f"✅ Local target '{target_name}' configured successfully!")
+            print(f"SUCCESS: Local target '{target_name}' configured successfully!")
         else:
-            print("❌ Target name is required.")
+            print("ERROR: Target name is required.")
     
     def load_existing_target(self):
         """Load an existing target configuration"""
         targets = self.config_manager.list_targets()
         
         if not targets:
-            print("❌ No saved targets found.")
+            print("ERROR: No saved targets found.")
             return
         
-        print("\n📁 Existing Targets:")
+        print("\nExisting Targets:")
         print("-" * 30)
         for i, target_name in enumerate(targets, 1):
             print(f"{i}. {target_name}")
@@ -373,16 +465,16 @@ class LLMSecurityTestingFramework:
             if 0 <= choice < len(targets):
                 target_name = targets[choice]
                 self.current_target = self.config_manager.get_target(target_name)
-                print(f"✅ Loaded target '{target_name}'")
+                print(f"SUCCESS: Loaded target '{target_name}'")
             else:
-                print("❌ Invalid selection.")
+                print("ERROR: Invalid selection.")
         except ValueError:
-            print("❌ Invalid input.")
+            print("ERROR: Invalid input.")
     
     def check_target_configured(self) -> bool:
         """Check if target is configured"""
         if not self.current_target:
-            print("❌ No target configured. Please configure a target first.")
+            print("ERROR: No target configured. Please configure a target first.")
             return False
         return True
 
@@ -391,38 +483,38 @@ class LLMSecurityTestingFramework:
         if not self.check_target_configured():
             return
         
-        print("\n⚡ Running Quick Security Scan...")
+        print("\nRunning Quick Security Scan...")
         print("-" * 40)
-        print("🔗 Testing connection to target...")
+        print("Testing connection to target...")
         
         # Test connection first
         try:
             client = LLMClient(self.current_target, self.logger)
             if not client.test_connection():
-                print("❌ Connection test failed. Check your target configuration.")
+                print("ERROR: Connection test failed. Check your target configuration.")
                 return
-            print("✅ Connection successful")
+            print("SUCCESS: Connection successful")
         except Exception as e:
-            print(f"❌ Connection failed: {str(e)}")
+            print(f"ERROR: Connection failed: {str(e)}")
             return
         
         all_results = []
         total_tests = len(self.prompt_injection_tests)
         
         # Run prompt injection tests with progress
-        print(f"\n🔓 Testing Prompt Injection ({total_tests} test categories)...")
+        print(f"\nTesting Prompt Injection ({total_tests} test categories)...")
         for i, test in enumerate(self.prompt_injection_tests, 1):
             try:
                 print(f"   [{i}/{total_tests}] Running {test.name}...", end="", flush=True)
                 results = test.run_test(self.current_target)
                 all_results.extend(results)
                 successful = len([r for r in results if r.success])
-                print(f" ✅ {successful}/{len(results)} vulnerabilities found")
+                print(f" SUCCESS: {successful}/{len(results)} vulnerabilities found")
             except Exception as e:
-                print(f" ❌ Failed: {str(e)}")
+                print(f" ERROR: Failed: {str(e)}")
                 self.logger.log_error(f"Test {test.name} failed: {str(e)}")
         
-        print(f"\n🎯 Quick scan completed - {len(all_results)} total tests executed")
+        print(f"\nQuick scan completed - {len(all_results)} total tests executed")
         
         # Display summary
         self.display_results_summary(all_results)
@@ -432,19 +524,19 @@ class LLMSecurityTestingFramework:
         if not self.check_target_configured():
             return
         
-        print("\n🔍 Running Comprehensive Security Assessment...")
+        print("\nRunning Comprehensive Security Assessment...")
         print("-" * 50)
         
         # Test connection first
-        print("🔗 Testing connection to target...")
+        print("Testing connection to target...")
         try:
             client = LLMClient(self.current_target, self.logger)
             if not client.test_connection():
-                print("❌ Connection test failed. Check your target configuration.")
+                print("ERROR: Connection test failed. Check your target configuration.")
                 return
-            print("✅ Connection successful")
+            print("SUCCESS: Connection successful")
         except Exception as e:
-            print(f"❌ Connection failed: {str(e)}")
+            print(f"ERROR: Connection failed: {str(e)}")
             return
         
         all_results = []
@@ -453,7 +545,7 @@ class LLMSecurityTestingFramework:
         
         # Prompt Injection Tests
         current_phase += 1
-        print(f"\n🔓 Phase {current_phase}/{phase_count}: Prompt Injection Testing...")
+        print(f"\nPhase {current_phase}/{phase_count}: Prompt Injection Testing...")
         total_tests = len(self.prompt_injection_tests)
         for i, test in enumerate(self.prompt_injection_tests, 1):
             try:
@@ -461,13 +553,13 @@ class LLMSecurityTestingFramework:
                 results = test.run_test(self.current_target)
                 all_results.extend(results)
                 successful = len([r for r in results if r.success])
-                print(f" ✅ {successful}/{len(results)} vulnerabilities")
+                print(f" SUCCESS: {successful}/{len(results)} vulnerabilities")
             except Exception as e:
-                print(f" ❌ Failed: {str(e)}")
+                print(f" ERROR: Failed: {str(e)}")
         
         # Data Extraction Tests
         current_phase += 1
-        print(f"\n📊 Phase {current_phase}/{phase_count}: Data Extraction Testing...")
+        print(f"\nPhase {current_phase}/{phase_count}: Data Extraction Testing...")
         try:
             print("   Running comprehensive data extraction tests...", end="", flush=True)
             extraction_summary = self.data_extraction_orchestrator.run_comprehensive_extraction(
@@ -477,13 +569,13 @@ class LLMSecurityTestingFramework:
             if hasattr(self.data_extraction_orchestrator, 'extraction_history') and self.data_extraction_orchestrator.extraction_history:
                 latest_results = self.data_extraction_orchestrator.extraction_history[-1].get('detailed_results', [])
                 all_results.extend(latest_results)
-            print(f" ✅ {extraction_summary['successful_extractions']}/{extraction_summary['total_tests']} vulnerabilities")
+            print(f" SUCCESS: {extraction_summary['successful_extractions']}/{extraction_summary['total_tests']} vulnerabilities")
         except Exception as e:
-            print(f" ❌ Failed: {str(e)}")
+            print(f" ERROR: Failed: {str(e)}")
         
         # Business Logic Tests
         current_phase += 1
-        print(f"\n💼 Phase {current_phase}/{phase_count}: Business Logic Testing...")
+        print(f"\nPhase {current_phase}/{phase_count}: Business Logic Testing...")
         try:
             print("   Running business logic bypass tests...", end="", flush=True)
             business_summary = self.business_logic_orchestrator.run_comprehensive_bypass_tests(
@@ -493,13 +585,13 @@ class LLMSecurityTestingFramework:
             if hasattr(self.business_logic_orchestrator, 'bypass_history') and self.business_logic_orchestrator.bypass_history:
                 latest_results = self.business_logic_orchestrator.bypass_history[-1].get('detailed_results', [])
                 all_results.extend(latest_results)
-            print(f" ✅ {business_summary['successful_bypasses']}/{business_summary['total_tests']} vulnerabilities")
+            print(f" SUCCESS: {business_summary['successful_bypasses']}/{business_summary['total_tests']} vulnerabilities")
         except Exception as e:
-            print(f" ❌ Failed: {str(e)}")
+            print(f" ERROR: Failed: {str(e)}")
         
         # Model Manipulation Tests
         current_phase += 1
-        print(f"\n🎭 Phase {current_phase}/{phase_count}: Model Manipulation Testing...")
+        print(f"\nPhase {current_phase}/{phase_count}: Model Manipulation Testing...")
         try:
             print("   Running model manipulation tests...", end="", flush=True)
             manipulation_summary = self.model_manipulation_orchestrator.run_comprehensive_manipulation_tests(
@@ -509,18 +601,18 @@ class LLMSecurityTestingFramework:
             if hasattr(self.model_manipulation_orchestrator, 'manipulation_history') and self.model_manipulation_orchestrator.manipulation_history:
                 latest_results = self.model_manipulation_orchestrator.manipulation_history[-1].get('detailed_results', [])
                 all_results.extend(latest_results)
-            print(f" ✅ {manipulation_summary['successful_manipulations']}/{manipulation_summary['total_tests']} vulnerabilities")
+            print(f" SUCCESS: {manipulation_summary['successful_manipulations']}/{manipulation_summary['total_tests']} vulnerabilities")
         except Exception as e:
-            print(f" ❌ Failed: {str(e)}")
+            print(f" ERROR: Failed: {str(e)}")
         
-        print(f"\n🎯 Comprehensive assessment completed!")
-        print(f"📊 Total tests executed: {len(all_results)}")
+        print(f"\nComprehensive assessment completed!")
+        print(f"Total tests executed: {len(all_results)}")
         
         # Display summary
         self.display_results_summary(all_results)
         
         # Offer to generate report
-        generate_report = input("\n📋 Generate detailed report? (y/n): ").strip().lower()
+        generate_report = input("\nGenerate detailed report? (y/n): ").strip().lower()
         if generate_report == 'y':
             self.generate_comprehensive_report(all_results)
     
@@ -529,7 +621,7 @@ class LLMSecurityTestingFramework:
         if not self.check_target_configured():
             return
         
-        print("\n🎯 Select Test Category:")
+        print("\nSelect Test Category:")
         print("-" * 30)
         print("1. Prompt Injection")
         print("2. Data Extraction")
@@ -550,11 +642,11 @@ class LLMSecurityTestingFramework:
         elif choice == "5":
             return
         else:
-            print("❌ Invalid option.")
+            print("ERROR: Invalid option.")
     
     def run_prompt_injection_tests(self):
         """Run prompt injection tests"""
-        print("\n🔓 Running Prompt Injection Tests...")
+        print("\nRunning Prompt Injection Tests...")
         all_results = []
         
         for test in self.prompt_injection_tests:
@@ -562,51 +654,51 @@ class LLMSecurityTestingFramework:
                 results = test.run_test(self.current_target)
                 all_results.extend(results)
                 successful = len([r for r in results if r.success])
-                print(f"✅ {test.name}: {successful}/{len(results)} vulnerabilities found")
+                print(f"SUCCESS: {test.name}: {successful}/{len(results)} vulnerabilities found")
             except Exception as e:
-                print(f"❌ {test.name} failed: {str(e)}")
+                print(f"ERROR: {test.name} failed: {str(e)}")
         
         self.display_results_summary(all_results)
     
     def run_data_extraction_tests(self):
         """Run data extraction tests"""
-        print("\n📊 Running Data Extraction Tests...")
+        print("\nRunning Data Extraction Tests...")
         try:
             summary = self.data_extraction_orchestrator.run_comprehensive_extraction(
                 self.current_target
             )
-            print(f"✅ Data Extraction Complete: {summary['successful_extractions']}/{summary['total_tests']} vulnerabilities found")
+            print(f"SUCCESS: Data Extraction Complete: {summary['successful_extractions']}/{summary['total_tests']} vulnerabilities found")
             print(f"   Risk Level: {summary['risk_assessment']['risk_level']}")
         except Exception as e:
-            print(f"❌ Data Extraction failed: {str(e)}")
+            print(f"ERROR: Data Extraction failed: {str(e)}")
     
     def run_business_logic_tests(self):
         """Run business logic tests"""
-        print("\n💼 Running Business Logic Tests...")
+        print("\nRunning Business Logic Tests...")
         try:
             summary = self.business_logic_orchestrator.run_comprehensive_bypass_tests(
                 self.current_target
             )
-            print(f"✅ Business Logic Complete: {summary['successful_bypasses']}/{summary['total_tests']} vulnerabilities found")
+            print(f"SUCCESS: Business Logic Complete: {summary['successful_bypasses']}/{summary['total_tests']} vulnerabilities found")
             print(f"   Success Rate: {summary['success_rate']:.1%}")
         except Exception as e:
-            print(f"❌ Business Logic failed: {str(e)}")
+            print(f"ERROR: Business Logic failed: {str(e)}")
     
     def run_model_manipulation_tests(self):
         """Run model manipulation tests"""
-        print("\n🎭 Running Model Manipulation Tests...")
+        print("\nRunning Model Manipulation Tests...")
         try:
             summary = self.model_manipulation_orchestrator.run_comprehensive_manipulation_tests(
                 self.current_target
             )
-            print(f"✅ Model Manipulation Complete: {summary['successful_manipulations']}/{summary['total_tests']} vulnerabilities found")
+            print(f"SUCCESS: Model Manipulation Complete: {summary['successful_manipulations']}/{summary['total_tests']} vulnerabilities found")
             print(f"   Impact Level: {summary['impact_assessment']['impact_level']}")
         except Exception as e:
-            print(f"❌ Model Manipulation failed: {str(e)}")
+            print(f"ERROR: Model Manipulation failed: {str(e)}")
     
     def view_configuration(self):
         """Display current configuration"""
-        print("\n⚙️ Current Configuration:")
+        print("\nCurrent Configuration:")
         print("-" * 30)
         
         if self.current_target:
@@ -617,7 +709,7 @@ class LLMSecurityTestingFramework:
             print(f"Max Tokens: {self.current_target.max_tokens}")
             print(f"Temperature: {self.current_target.temperature}")
         else:
-            print("❌ No target configured")
+            print("ERROR: No target configured")
         
         # Show available targets
         targets = self.config_manager.list_targets()
@@ -627,12 +719,12 @@ class LLMSecurityTestingFramework:
     def display_results_summary(self, results):
         """Display test results summary"""
         if not results:
-            print("\n📊 No test results to display.")
+            print("\nNo test results to display.")
             return
         
         successful = [r for r in results if r.success]
         
-        print(f"\n📊 Test Results Summary:")
+        print(f"\nTest Results Summary:")
         print("-" * 30)
         print(f"Total Tests: {len(results)}")
         print(f"Vulnerabilities Found: {len(successful)}")
@@ -649,13 +741,13 @@ class LLMSecurityTestingFramework:
             # Show critical/high findings
             critical_high = [r for r in successful if r.severity.value in ['critical', 'high']]
             if critical_high:
-                print(f"\n🚨 Critical/High Severity Findings:")
+                print(f"\nCRITICAL/HIGH SEVERITY FINDINGS:")
                 for result in critical_high[:5]:  # Show first 5
                     print(f"  - {result.test_name}: {result.severity.value}")
 
     def generate_comprehensive_report(self, results):
         """Generate comprehensive report"""
-        print("\n📋 Generating Report...")
+        print("\nGenerating Report...")
         
         try:
             metadata = ReportMetadata(
@@ -678,10 +770,10 @@ class LLMSecurityTestingFramework:
             # Save report
             output_file = f"security_report_{metadata.report_id}.html"
             saved_path = self.report_generator.save_report(report_data, output_file)
-            print(f"✅ Report generated: {saved_path}")
+            print(f"SUCCESS: Report generated: {saved_path}")
             
         except Exception as e:
-            print(f"❌ Report generation failed: {str(e)}")
+            print(f"ERROR: Report generation failed: {str(e)}")
     
     def run(self):
         """Main program loop"""
@@ -706,18 +798,18 @@ class LLMSecurityTestingFramework:
                     if self.check_target_configured():
                         self.generate_comprehensive_report([])  # Would use actual results
                 elif choice == "7":
-                    print("\n👋 Goodbye!")
+                    print("\nGoodbye!")
                     break
                 else:
-                    print("❌ Invalid option. Please try again.")
+                    print("ERROR: Invalid option. Please try again.")
                 
                 input("\nPress Enter to continue...")
                 
             except KeyboardInterrupt:
-                print("\n\n👋 Goodbye!")
+                print("\n\nGoodbye!")
                 break
             except Exception as e:
-                print(f"\n❌ An error occurred: {str(e)}")
+                print(f"\nERROR: An error occurred: {str(e)}")
                 input("Press Enter to continue...")
 
 def main():
@@ -727,12 +819,12 @@ def main():
         check_version_startup()
         print()  # Add spacing after version check
         
-        print("🚀 Starting LLM Security Testing Framework...")
+        print("Starting LLM Security Testing Framework...")
         framework = LLMSecurityTestingFramework()
-        print("✅ Framework initialized, starting run...")
+        print("Framework initialized, starting run...")
         framework.run()
     except Exception as e:
-        print(f"💥 Fatal error: {str(e)}")
+        print(f"FATAL ERROR: {str(e)}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
