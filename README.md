@@ -1,6 +1,6 @@
 # LLM Security Testing Framework
 
-A comprehensive security assessment toolkit for Large Language Models (LLMs) designed for red team and blue team operations.
+A security assessment toolkit for Large Language Models (LLMs) designed for red team and blue team operations.
 
 ## 🔒 Overview
 
@@ -209,42 +209,6 @@ python main.py --config custom_config.yaml
 python main.py --verbose
 ```
 
-## 🛡️ Ethical Use & Legal Compliance
-
-### ⚠️ Important Disclaimers
-
-- **Authorization Required**: Only test systems you own or have explicit permission to test
-- **Responsible Disclosure**: Report vulnerabilities through proper channels
-- **Legal Compliance**: Ensure testing complies with local laws and regulations
-- **No Malicious Use**: This tool is for defensive security purposes only
-
-### Ethical Guidelines
-
-1. **Obtain proper authorization** before testing any LLM system
-2. **Respect rate limits** and terms of service
-3. **Protect sensitive data** discovered during testing
-4. **Report findings responsibly** to system owners
-5. **Document your testing** for compliance purposes
-
-## 📁 Project Structure
-
-```
-llm-security-framework/
-├── main.py                    # Main CLI interface
-├── llm_scan.py               # Core security testing engine
-├── config_manager.py         # Configuration management
-├── llm_client.py             # LLM communication client
-├── prompt_injection.py       # Prompt injection tests
-├── data_extraction.py        # Data extraction tests
-├── business_logic_bypass.py  # Business logic tests
-├── model_manipulation.py     # Model manipulation tests
-├── report_writer.py          # Report generation
-├── response_analysis.py      # Advanced response analysis
-├── requirements.txt          # Python dependencies
-├── setup.py                 # Package setup
-└── README.md                # This file
-```
-
 ## 🔍 Advanced Features
 
 ### Custom Test Development
@@ -284,16 +248,6 @@ class CustomSecurityTest(BaseSecurityTest):
     "
 ```
 
-## 🤝 Contributing
-
-We welcome contributions! Please see our contributing guidelines:
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
 ### Development Setup
 
 ```bash
@@ -306,13 +260,6 @@ python -m pytest tests/
 # Code formatting
 black llm_security_framework/
 ```
-
-## 📖 Documentation
-
-- [API Documentation](docs/api.md)
-- [Test Development Guide](docs/custom_tests.md)
-- [Configuration Reference](docs/configuration.md)
-- [Integration Examples](docs/examples.md)
 
 ## 🐛 Troubleshooting
 
@@ -336,27 +283,35 @@ export OPENAI_API_KEY="your-key"
 # Default: 1 request per second
 ```
 
-### Getting Help
+## Disclaimer
 
-- Check the [FAQ](docs/faq.md)
-- Review [example configurations](examples/)
-- Open an issue on GitHub
-- Join our community discussions
+This tool is for educational and research purposes only. Users are responsible for how they deploy and use this honeypot system. Always obtain proper authorization before deploying honeypots in production environments.
 
-## 📄 License
+## Contact
+For professional services, integrations, or support contact: operations@redcellsecurity.org
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## License
 
-## 🔗 Related Projects
+**Author**: Keith Pachulski  
+**Company**: Red Cell Security, LLC  
+**Email**: keith@redcellsecurity.org  
+**Website**: www.redcellsecurity.org  
 
-- [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
-- [LLM Security Research](https://github.com/llm-security)
-- [AI Red Team Tools](https://github.com/ai-redteam)
+© 2025 Keith Pachulski. All rights reserved.
 
-## 📞 Support
+**License**: This software is licensed under the MIT License. You are free to use, modify, and distribute this software in accordance with the terms of the license.
 
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/your-org/llm-security-framework/issues)
+## Support My Work
+
+If you find my work useful and want to support continued development, you can donate here:
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/sec0ps)
+
+> **DISCLAIMER**:  
+> This software is provided "as-is," without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the authors or copyright holders
+> be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+> This tool is for educational and research purposes only. Users are responsible for how they deploy and use this honeypot system. Always obtain proper authorization before deploying honeypots in production environments.
+
 - **Security**: [security@yourorg.com](mailto:security@yourorg.com)
 
 ---
