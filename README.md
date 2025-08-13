@@ -2,11 +2,11 @@
 
 A security assessment toolkit for Large Language Models (LLMs) designed for red team and blue team operations.
 
-## 🔒 Overview
+## Overview
 
 The LLM Security Testing Framework is a Python-based tool that provides systematic security testing capabilities for AI systems. It includes automated vulnerability detection, business logic bypass testing, data extraction analysis, and comprehensive reporting.
 
-## ⚡ Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -31,7 +31,7 @@ The LLM Security Testing Framework is a Python-based tool that provides systemat
    python main.py
    ```
 
-## 🎯 Features
+## Features
 
 ### Core Testing Capabilities
 
@@ -54,7 +54,7 @@ The LLM Security Testing Framework is a Python-based tool that provides systemat
 - **Multiple Formats** - HTML, JSON, Markdown output
 - **Compliance Mapping** - NIST, ISO 27001, SOC 2 alignment
 
-## 🚀 Usage
+## Usage
 
 ### Basic Security Scan
 
@@ -97,7 +97,7 @@ framework = LLMSecurityTestingFramework()
 results = framework.run_comprehensive_assessment(target)
 ```
 
-## 📋 Test Categories
+## Test Categories
 
 ### 1. Prompt Injection Tests
 - Direct instruction override attempts
@@ -129,7 +129,7 @@ results = framework.run_comprehensive_assessment(target)
 - Denial of service testing
 - Hallucination induction
 
-## ⚙️ Configuration
+## ⚙Configuration
 
 ### Target Templates
 
@@ -193,7 +193,7 @@ Key Findings:
 Risk Score: 6.2/10.0 (HIGH)
 ```
 
-## 🔧 Command Line Interface
+## Command Line Interface
 
 ```bash
 # Run specific test category
@@ -209,7 +209,7 @@ python main.py --config custom_config.yaml
 python main.py --verbose
 ```
 
-## 🔍 Advanced Features
+## Advanced Features
 
 ### Custom Test Development
 
@@ -261,7 +261,7 @@ python -m pytest tests/
 black llm_security_framework/
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -316,4 +316,4 @@ If you find my work useful and want to support continued development, you can do
 
 ---
 
-**⚠️ Security Reminder**: This tool is designed for authorized security testing only. Always ensure you have proper permission before testing any LLM system.
+** Security Reminder**: This tool is designed for authorized security testing only. Always ensure you have proper permission before testing any LLM system.
